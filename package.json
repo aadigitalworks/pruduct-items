@@ -1,10 +1,24 @@
 {
-  "devDependencies": {
-    "tailwindcss": "^4.1.11",
-    "postcss": "^8.5.6",
-    "autoprefixer": "^10.4.21"
-  },
+  "name": "pruduct-items",
+  "version": "1.0.0",
   "scripts": {
-    "build:css": "tailwindcss -i ./src/input.css -o ./dist/output.css --watch"
+    "build:css": "tailwindcss -i ./src/input.css -o ./dist/output.css --watch",
+    "build": "next build",
+    "export": "next export",
+     "deploy": "npm run build && npm run export && gh-pages -d out",
+    "dev": "next dev",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "next": "^15.3.5",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.21",
+    "gh-pages": "^5.0.0",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.11"
   }
 }
