@@ -48,8 +48,7 @@ export async function getStaticProps({ params }) {
     }
 
     return { 
-      props: { product },
-      revalidate: 3600 // Revalidate every hour
+      props: { product }
     };
   } catch (error) {
     console.error('Error in getStaticProps:', error);
