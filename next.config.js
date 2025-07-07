@@ -1,5 +1,5 @@
 const isProd = process.env.NODE_ENV === 'production';
-const repoName = 'pruduct-items';  // <-- replace this with your actual GitHub repo name
+const repoName = 'pruductitems';  
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -15,8 +15,7 @@ const nextConfig = {
     unoptimized: true, // required for static export
   },
 
-  // You can remove exportPathMap when using app dir
-  // Dynamic routes should use generateStaticParams or getStaticPaths instead
+ 
 };
 
 module.exports = nextConfig;
