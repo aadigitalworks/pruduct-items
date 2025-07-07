@@ -29,18 +29,16 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
-        working-directory: pruduct-items
 
       - name: Build and Export Next.js
         run: |
           npm run build
           npm run export
-        working-directory: pruduct-items
 
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: pruduct-items/out
+          path: out
 
       - name: Deploy to GitHub Pages
         uses: actions/deploy-pages@v4
