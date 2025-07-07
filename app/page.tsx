@@ -11,7 +11,7 @@ export default function Home() {
     const updateCartCount = () => {
       try {
         const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-        const count = cart.reduce((sum, item) => sum + item.quantity, 0);
+        const count = cart.reduce((sum: number, item: { quantity: number }) => sum + item.quantity, 0);
         setCartCount(count);
       } catch (error) {
         console.error('Error loading cart:', error);

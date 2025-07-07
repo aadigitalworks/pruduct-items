@@ -1,16 +1,51 @@
+declare global {
+  interface Window {
+    paypal?: any;
+  }
+}
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 
+type CartItem = {
+  id: string | number;
+  title: string;
+  price: string; // price as string from data
+  quantity: number;
+  image_link: string;
+  brand?: string;
+  size?: string;
+  color?: string;
+};
+
 export default function Cart() {
-  const [cart, setCart] = useState([]);
+  const [cart, setCart] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Simulated product data — replace with your real product data or API
+  const productsData: CartItem[] = [
+    { id: 1, title: 'Product 1', price: '10.00', quantity: 0, image_link: '/images/product1.jpg', brand: 'BrandA', size: 'M', color: 'Red' },
+    { id: 2, title: 'Product 2', price: '15.50', quantity: 0, image_link: '/images/product2.jpg', brand: 'BrandB', size: 'L', color: 'Blue' },
+    // Add more products as needed
+  ];
+
+  // Load cart from localStorage and merge with product details
   useEffect(() => {
     const loadCart = () => {
       try {
-        const items = JSON.parse(localStorage.getItem("cart") || "[]");
-        setCart(items);
+        const storedCart = localStorage.getItem('cart');
+        if (storedCart) {
+          const parsed = JSON.parse(storedCart) as { id: number | string; quantity: number }[];
+          // Merge stored cart with product data to get full info
+          const mergedCart = parsed.map(({ id, quantity }) => {
+            const product = productsData.find(p => p.id === id);
+            if (!product) return null;
+            return { ...product, quantity };
+          }).filter(Boolean) as CartItem[];
+          setCart(mergedCart);
+        } else {
+          setCart([]);
+        }
       } catch (error) {
         console.error('Error loading cart:', error);
         setCart([]);
@@ -20,71 +55,85 @@ export default function Cart() {
     };
 
     loadCart();
+
+    // Listen for storage events to update cart if changed in other tabs
+    const handleStorageChange = () => loadCart();
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
-  const updateQuantity = (id, newQuantity) => {
+  // Save cart to localStorage when cart changes
+  useEffect(() => {
+    if (!loading) {
+      // Store only id and quantity to localStorage to minimize size
+      const minimalCart = cart.map(({ id, quantity }) => ({ id, quantity }));
+      localStorage.setItem('cart', JSON.stringify(minimalCart));
+    }
+  }, [cart, loading]);
+
+  // Update quantity for an item
+  const updateQuantity = (id: CartItem['id'], newQuantity: number) => {
     if (newQuantity <= 0) {
       removeItem(id);
       return;
     }
-
-    const updatedCart = cart.map(item => 
-      item.id === id ? { ...item, quantity: newQuantity } : item
+    setCart(curr =>
+      curr.map(item => (item.id === id ? { ...item, quantity: newQuantity } : item))
     );
-    setCart(updatedCart);
-    localStorage.setItem("cart", JSON.stringify(updatedCart));
   };
 
-  const removeItem = (id) => {
-    const updatedCart = cart.filter(item => item.id !== id);
-    setCart(updatedCart);
-    localStorage.setItem("cart", JSON.stringify(updatedCart));
+  // Remove item from cart
+  const removeItem = (id: CartItem['id']) => {
+    setCart(curr => curr.filter(item => item.id !== id));
   };
 
+  // Clear entire cart
   const clearCart = () => {
     setCart([]);
-    localStorage.removeItem("cart");
+    localStorage.removeItem('cart');
   };
 
-  const total = cart.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0).toFixed(2);
-  const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+  // Calculate total items count and total price
+  const itemCount = cart.reduce((total, item) => total + item.quantity, 0);
+  const total = cart
+    .reduce((sum, item) => sum + parseFloat(item.price) * item.quantity, 0)
+    .toFixed(2);
 
+  // PayPal setup (assumes `window.paypal` exists)
   const initializePayPal = () => {
     if (window.paypal && cart.length > 0) {
       window.paypal.Buttons({
-        createOrder: (data, actions) => {
-          return actions.order.create({
-            purchase_units: [{
-              amount: { 
-                value: total 
-              },
-              description: `Order of ${itemCount} items`
-            }]
-          });
-        },
-        onApprove: (data, actions) => {
-          return actions.order.capture().then(details => {
-            alert('Payment complete! Thank you ' + details.payer.name.given_name);
-            clearCart();
-          });
-        },
-        onError: (err) => {
+  createOrder: (data: any, actions: any) => {
+    return actions.order.create({
+      purchase_units: [{
+        amount: { value: total },
+      }],
+    });
+  },
+      onApprove: (data: any, actions: any) => {
+  return actions.order.capture().then((details: any) => {
+    alert('Payment complete! Thank you ' + details.payer.name.given_name);
+    clearCart();
+  });
+},
+         onError: (err: any) => {
           console.error('PayPal Error:', err);
           alert('Payment failed. Please try again.');
-        }
+        },
       }).render('#paypal-cart-button');
     }
   };
 
   useEffect(() => {
     if (!loading && cart.length > 0) {
-      // Clear any existing PayPal buttons
       const paypalContainer = document.getElementById('paypal-cart-button');
       if (paypalContainer) {
         paypalContainer.innerHTML = '';
       }
 
-      // Initialize PayPal
       if (window.paypal) {
         initializePayPal();
       } else {
@@ -110,16 +159,18 @@ export default function Cart() {
         <title>Shopping Cart - Your Store</title>
         <meta name="description" content="Review your cart and checkout" />
       </Head>
-      
+
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-3xl font-bold text-gray-900 mb-8">Shopping Cart</h1>
-          
+
           {cart.length === 0 ? (
             <div className="text-center py-12">
               <div className="text-gray-500 text-lg mb-4">Your cart is empty</div>
-              <Link href="/" className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
-                Continue Shopping
+              <Link href="/">
+                <a className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
+                  Continue Shopping
+                </a>
               </Link>
             </div>
           ) : (
@@ -127,13 +178,13 @@ export default function Cart() {
               {/* Cart Items */}
               <div className="space-y-4">
                 {cart.map((item) => (
-                  <div key={item.id} className="flex items-center space-x-4 p-4 border rounded-lg">
-                    <img 
-                      src={item.image_link} 
+                  <div key={item.id} className="flex items-center space-x-4 p-4 border rounded-lg relative">
+                    <img
+                      src={item.image_link}
                       alt={item.title}
                       className="w-20 h-20 object-cover rounded"
                     />
-                    
+
                     <div className="flex-1">
                       <h3 className="font-semibold text-lg">{item.title}</h3>
                       <p className="text-gray-600">${item.price}</p>
@@ -141,7 +192,7 @@ export default function Cart() {
                       {item.size && <p className="text-sm text-gray-500">Size: {item.size}</p>}
                       {item.color && <p className="text-sm text-gray-500">Color: {item.color}</p>}
                     </div>
-                    
+
                     <div className="flex items-center space-x-2">
                       <button
                         onClick={() => updateQuantity(item.id, item.quantity - 1)}
@@ -157,7 +208,7 @@ export default function Cart() {
                         +
                       </button>
                     </div>
-                    
+
                     <div className="text-right">
                       <div className="font-semibold">${(parseFloat(item.price) * item.quantity).toFixed(2)}</div>
                       <button
@@ -172,18 +223,27 @@ export default function Cart() {
               </div>
 
               {/* Cart Summary */}
-              <div className="bg-gray-50 p-6 rounded-lg">
+              <div className="bg-gray-50 p-6 rounded-lg relative">
+                {/* Cart count badge */}
+                {itemCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    {itemCount > 9 ? '9+' : itemCount}
+                  </span>
+                )}
+
                 <div className="flex justify-between items-center mb-4">
                   <span className="text-lg font-semibold">Total ({itemCount} items):</span>
                   <span className="text-2xl font-bold text-blue-600">${total}</span>
                 </div>
-                
+
                 <div className="space-y-4">
                   <div id="paypal-cart-button"></div>
-                  
+
                   <div className="flex space-x-4">
-                    <Link href="/" className="flex-1 bg-gray-200 text-gray-800 px-6 py-3 rounded-lg text-center hover:bg-gray-300 transition-colors">
-                      Continue Shopping
+                    <Link href="/">
+                      <a className="flex-1 bg-gray-200 text-gray-800 px-6 py-3 rounded-lg text-center hover:bg-gray-300 transition-colors">
+                        Continue Shopping
+                      </a>
                     </Link>
                     <button
                       onClick={clearCart}
