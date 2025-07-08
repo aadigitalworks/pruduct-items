@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "deploy": "next build && gh-pages -d out",
+    "sitemap": "next-sitemap",
+    "deploy": "next build && next export && next-sitemap && gh-pages -d out",
     "build:css": "tailwindcss -i ./src/input.css -o ./dist/output.css --watch"
   },
   "dependencies": {
