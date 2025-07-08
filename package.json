@@ -7,10 +7,9 @@
   "dev": "next dev",
   "build": "next build",
   "start": "next start",
-  "export": "next export",
   "lint": "next lint",
   "sitemap": "next-sitemap",
-  "deploy": "next build && next export && next-sitemap && gh-pages -d out",
+  "deploy": "next build && next-sitemap && gh-pages -d out",
   "build:css": "tailwindcss -i ./src/input.css -o ./dist/output.css --watch"
 },
   "dependencies": {
