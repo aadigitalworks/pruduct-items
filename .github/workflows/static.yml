@@ -37,11 +37,13 @@ jobs:
           npm run build
           npm run sitemap
 
-      - name: Upload GitHub Pages artifact
-        uses: actions/upload-pages-artifact@v2
+      - name: Upload artifact manually
+        uses: actions/upload-artifact@v4
         with:
+          name: github-pages
           path: out
 
       - name: Deploy to GitHub Pages
         uses: actions/deploy-pages@v1
-        id: deployment
+        with:
+          artifact_name: github-pages
