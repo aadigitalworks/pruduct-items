@@ -1,12 +1,17 @@
-/** @type {import('next-sitemap').IConfig} */
-const repo = 'pruductitems'; // Your repo name if using GitHub Pages
-
 const isProd = process.env.NODE_ENV === 'production';
+const repo = 'pruductitems';
+
+if (!isProd) {
+  console.log('Skipping sitemap generation for local environment');
+  // Optional: export empty config or exit early
+  module.exports = {};
+  return;
+}
 
 module.exports = {
-  siteUrl: isProd ? `https://aadigitalworks.github.io/${repo}` : 'http://localhost:3000',
+  siteUrl: `https://aadigitalworks.github.io/${repo}`,
   generateRobotsTxt: true,
-  outDir: './out', // This must match your export dir
+  outDir: './out',
   generateIndexSitemap: false,
   changefreq: 'weekly',
 };

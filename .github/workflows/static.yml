@@ -32,9 +32,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build and Generate Sitemap
+      - name: Build, Export, and Generate Sitemap
+        env:
+          NODE_ENV: production
         run: |
           npm run build
+          npm run export
           npm run sitemap
 
       - name: Upload GitHub Pages artifact

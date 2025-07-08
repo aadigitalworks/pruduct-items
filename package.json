@@ -9,6 +9,7 @@
   "start": "next start",
   "lint": "next lint",
   "sitemap": "next-sitemap",
+  "sitemap:prod": "NODE_ENV=production next-sitemap",
   "deploy": "next build && next-sitemap && gh-pages -d out",
   "build:css": "tailwindcss -i ./src/input.css -o ./dist/output.css --watch"
 },
